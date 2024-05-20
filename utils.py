@@ -1,6 +1,7 @@
 import requests
 import json
 from bd_conexao import conectarBd
+
 from models import User
 
 def send_sms(phone, text):
@@ -23,8 +24,6 @@ def send_sms(phone, text):
         print(response.json())
     else:
         print(response.text)
-
-
 
 
 
@@ -89,7 +88,116 @@ def salvar_token(email, token):
     cursor.close()
     conexao.close()
 
+def list_users():
+    conexao = conectarBd()
+    cursor = conexao.cursor()
+    comando = 'SELECT * FROM users'
+    cursor.execute(comando)
+    usuarios = cursor.fetchall()
+    conexao.close()
+    print(type(usuarios[0]))
+    return usuarios
 
-#MANIPULAÇÃO CSV
-def salvar_csv_db(matriz):
-    pass
+def salvar_token_publico(name, token):
+    conexao = conectarBd()
+    cursor = conexao.cursor()
+    comando = f'INSERT INTO public_tokens ( name, token) VALUES ("{name}","{token}")'
+    cursor.execute(comando)
+    conexao.commit()
+    cursor.close()
+    conexao.close()
+
+def listar_keys_db():
+    conexao = conectarBd()
+    cursor = conexao.cursor()
+    comando = 'SELECT * FROM bases'
+    cursor.execute(comando)
+    keys = cursor.fetchall()
+    conexao.close()
+    return keys
+
+
+def salvar_keys(name, keys):
+    conexao = conectarBd()
+    cursor = conexao.cursor()
+    comando = f'INSERT INTO bases (`name`,`chaves`) VALUES ("{name}","{keys}")'
+    cursor.execute(comando)
+    conexao.commit()                                                                            
+    return cursor.lastrowid
+
+
+#json.dumps(dict, ensure_ascii=False, indent=4)
+def salvarInfos(listDict, base_id):
+    conexao = conectarBd()
+    cursor = conexao.cursor()
+    comando = f'INSERT INTO infos (`infos`,`base_id`) VALUES ("{listDict}",{base_id})'
+    cursor.execute(comando)
+    conexao.commit()                                                                            
+
+
+
+def listar_infos_bd():
+    conexao = conectarBd()
+    cursor = conexao.cursor()
+    comando = 'SELECT infos FROM infos'
+    cursor.execute(comando)
+    lista_infos = [info[0] for info in cursor.fetchall()]
+    conexao.close()
+    return lista_infos
+ 
+
+
+def listar_infos_bd_formatada():
+    conexao = conectarBd()
+    cursor = conexao.cursor()
+    comando = 'SELECT infos FROM infos'
+    cursor.execute(comando)
+    lista_infos = [info[0] for info in cursor.fetchall()]
+    conexao.close()
+    #FORMATACAO 
+    lista_infos_formatada = []
+    for info in lista_infos:
+        info = info.replace("'", '')
+        info = info.replace("{", '')
+        info = info.replace("}", '')
+        infos = info.split(',')
+        infos_formatados = []
+        for info in infos:
+            info = info.split(':')
+            info = {info[0]: info[1]}
+            infos_formatados.append(info)
+
+        dicionario_unico = {}
+
+        for item in infos_formatados:
+            chave, valor = next(iter(item.items()))
+            dicionario_unico[chave.strip()] = valor.strip()
+        infos = dicionario_unico
+
+        lista_infos_formatada.append(infos)
+    return lista_infos_formatada
+
+
+
+
+#FORMATAR  A  MENSAGEM  DE ACORDO COM AS CHAVES E VALORES QUE VIRAM DO FRONT
+mensagem = "Oi [nome], como voce esta?"
+
+variavel = 'nome'
+
+dicionario = {
+    "nome":"Rodrigo",
+    "idade": "25"
+}
+
+chaves = []
+
+for chave in dicionario:
+    chaves.append(chave)
+
+
+mensagem = mensagem.split(' ')
+
+for palavra in mensagem:
+    if palavra == "":
+        print(palavra)

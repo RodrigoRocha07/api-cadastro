@@ -4,11 +4,20 @@ from datetime import datetime, timezone, timedelta
 SECRET_KEY = "IMPULSEMAX"
 ALGORITHM = 'HS256'
 TIME_EXP = 60
+TIME_EXP_anual = 60*24*366
 
 
 def criar_token(data: dict):
     dados = data.copy()
     expiracao = datetime.now(timezone.utc) + timedelta(minutes=TIME_EXP)
+    dados.update({'exp': expiracao.timestamp()})
+
+    token_jwt = jwt.encode(dados, SECRET_KEY, algorithm=ALGORITHM)
+    return token_jwt
+
+def criar_token(data: dict):
+    dados = data.copy()
+    expiracao = datetime.now(timezone.utc) + timedelta(minutes=TIME_EXP_anual)
     dados.update({'exp': expiracao.timestamp()})
 
     token_jwt = jwt.encode(dados, SECRET_KEY, algorithm=ALGORITHM)

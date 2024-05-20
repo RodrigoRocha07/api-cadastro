@@ -35,6 +35,16 @@ async def token_authentication_in_header(request: Request):
     raise HTTPException(status_code=401, detail="Credenciais não fornecidas")
 
 
+@app.get('/usuarios')
+async def listar_usuarios():
+    return list_users()
+
+
+@app.get('/listar_keys')
+async def listar_keys():
+    return listar_keys_db()
+
+
 @app.post("/signUp")
 async def signUp(request: Request, user: User):
     if checar_email(user.email):
@@ -42,7 +52,6 @@ async def signUp(request: Request, user: User):
     else:
         salvar_user_db(user)
     return 'Cadastrado'
-
 
 
 @app.post("/signIn")
@@ -65,7 +74,6 @@ async def signIn(request_data: Dict[str, str]):
     raise HTTPException(status_code=401, detail="Usuario não encontrado")
 
 
-
 @app.post("/verify")
 async def verify(dict: Dict):
     token = dict['token']
@@ -76,6 +84,11 @@ async def verify(dict: Dict):
     else:
         return 'Invalido'
 
+@app.post('/criar_token_publico')
+async def criar_tk(dict:Dict):
+    token = token_provider.criar_token(dict)
+    salvar_token_publico(dict['name'] , token)
+    return token
 
 
 @app.post("/send_sms")
@@ -84,8 +97,6 @@ async def verify(request_data: Dict[str, str],request: Request, authenticated: N
     text = request_data.get('text')
     send_sms(phone, text)
     return "sms enviado"
-
-
 
 
 
@@ -101,10 +112,20 @@ async def upload_csv(name: str = Form(...), csv_file: UploadFile = File(...)):
     csv_reader = csv.reader(decoded_content)
     for row in csv_reader:
         csv_data.append(row)
-    csv_data = csv_data[0:5]
 
     keys = csv_data[0][0].split(';')
     matriz = csv_data[1:]
     listDict = list(map(lambda linha:dict(zip(keys, linha[0].split(';'))),matriz))
+    
+    base_id = salvar_keys(keys, name)
+    salvarInfos(listDict[0], base_id)
+    
+    json_string = json.dumps(listDict[0], indent=4)
+    return listDict[0]
 
-    return listDict
+
+@app.get('/infos')
+async def listar_infos():
+    return listar_infos_bd_formatada()
+
+
